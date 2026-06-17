@@ -1,7 +1,6 @@
 /*
    DevPortfolio - script.js
-   Features: Login, LocalStorage, Matrix,
-   Typing, Counters, Reveal, Filters, Toast */
+   Features: Matrix, Typing, Counters, Reveal, Filters, Toast */
 
 'use strict';
 
@@ -82,12 +81,6 @@ const PROJECTS = [
   },
 ];
 
-const TYPED_LOGIN_PHRASES = [
-  'initializing_auth_module...',
-  'checking_credentials...',
-  'welcome_to_devfolio',
-];
-
 const TYPED_ROLES = [
   'Student Developer',
   'QA Learner',
@@ -125,47 +118,7 @@ developer.contactMe();
 `;
 
 
-const STORAGE_KEY = 'devfolio_sessions';
 
-function getSessions() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSessions(sessions) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-}
-
-function addSession(name, email) {
-  const sessions = getSessions();
-
-  const filtered = sessions.filter(s => s.email !== email);
-  const session = {
-    name,
-    email,
-    timestamp: new Date().toISOString(),
-  };
-  filtered.unshift(session); 
-  saveSessions(filtered.slice(0, 8)); 
-  return session;
-}
-
-function formatTime(isoString) {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'yesterday';
-  return `${diffDays}d ago`;
-}
 
 
 function initMatrix() {
@@ -250,7 +203,7 @@ function animateCode() {
   const chars = CODE_SNIPPET.split('');
   const htmlChars = coloredCode.split('');
 
-  
+
   let htmlIdx = 0;
   function typeNext() {
     if (i >= chars.length) return;
@@ -444,143 +397,6 @@ function renderProjects() {
   `).join('');
 }
 
-function renderHistory() {
-  const sessions = getSessions();
-  const section = document.getElementById('history-section');
-  const list = document.getElementById('history-list');
-
-  if (!sessions.length) {
-    section.style.display = 'none';
-    return;
-  }
-  section.style.display = 'block';
-
-  list.innerHTML = sessions.map(s => `
-    <li class="history-item" data-email="${s.email}" data-name="${s.name}">
-      <div class="history-avatar">${s.name.charAt(0).toUpperCase()}</div>
-      <div class="history-info">
-        <div class="history-name">${s.name}</div>
-        <div class="history-email">${s.email}</div>
-      </div>
-      <div class="history-time">${formatTime(s.timestamp)}</div>
-    </li>
-  `).join('');
-
-  
-  list.querySelectorAll('.history-item').forEach(item => {
-    item.addEventListener('click', () => {
-      document.getElementById('login-name').value = item.dataset.name;
-      document.getElementById('login-email').value = item.dataset.email;
-    });
-  });
-}
-
-
-function handleLogin(name, email) {
-  const session = addSession(name, email);
-  // Update UI
-  document.getElementById('hero-name').textContent = name;
-  document.getElementById('about-username').textContent = name.split(' ')[0];
-  document.getElementById('footer-name').textContent = name;
-  document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
-  document.getElementById('user-name-nav').textContent = name;
-  document.getElementById('session-email-display').textContent = email;
-
-  // Switch screens
-  const loginScreen = document.getElementById('login-screen');
-  const portfolioScreen = document.getElementById('portfolio-screen');
-
-  loginScreen.style.opacity = '1';
-  loginScreen.style.transition = 'opacity 0.6s ease';
-  loginScreen.style.opacity = '0';
-  setTimeout(() => {
-    loginScreen.classList.remove('active');
-    loginScreen.style.display = 'none';
-    portfolioScreen.classList.add('active');
-    portfolioScreen.style.opacity = '0';
-    portfolioScreen.style.transition = 'opacity 0.6s ease';
-    setTimeout(() => {
-      portfolioScreen.style.opacity = '1';
-    }, 50);
-
-    // Init portfolio components
-    animateCode();
-    animateCounters();
-    initReveal();
-    initNavbar();
-    initProjectFilter();
-    renderSkills();
-    renderProjects();
-    initReveal(); // re-run after render
-    startTypingLoop(document.getElementById('typed-role'), TYPED_ROLES, 70, 2000, 40);
-    showToast(`🚀 Welcome back, ${name.split(' ')[0]}!`, 'success');
-  }, 600);
-}
-
-
-function initLoginScreen() {
-  startTypingLoop(document.getElementById('typed-login'), TYPED_LOGIN_PHRASES, 60, 2200, 25);
-  renderHistory();
-
-  const form = document.getElementById('login-form');
-  const errorEl = document.getElementById('login-error');
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('login-name').value.trim();
-    const email = document.getElementById('login-email').value.trim();
-
-    // Validation
-    errorEl.classList.add('hidden');
-    errorEl.textContent = '';
-
-    if (!name) {
-      errorEl.textContent = '⚠ Please enter your username.';
-      errorEl.classList.remove('hidden');
-      document.getElementById('login-name').focus();
-      return;
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errorEl.textContent = '⚠ Please enter a valid email address.';
-      errorEl.classList.remove('hidden');
-      document.getElementById('login-email').focus();
-      return;
-    }
-
-    // Show loader
-    const btn = document.getElementById('login-btn');
-    btn.querySelector('.btn-text').classList.add('hidden');
-    btn.querySelector('.btn-loader').classList.remove('hidden');
-    btn.disabled = true;
-
-    setTimeout(() => handleLogin(name, email), 1200);
-  });
-}
-
-
-function initLogout() {
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    const portfolioScreen = document.getElementById('portfolio-screen');
-    const loginScreen = document.getElementById('login-screen');
-
-    portfolioScreen.style.opacity = '0';
-    setTimeout(() => {
-      portfolioScreen.classList.remove('active');
-      portfolioScreen.style.removeProperty('opacity');
-      loginScreen.style.removeProperty('opacity');
-      loginScreen.classList.add('active');
-      // Reset login form
-      document.getElementById('login-form').reset();
-      document.getElementById('login-error').classList.add('hidden');
-      const btn = document.getElementById('login-btn');
-      btn.querySelector('.btn-text').classList.remove('hidden');
-      btn.querySelector('.btn-loader').classList.add('hidden');
-      btn.disabled = false;
-      renderHistory();
-    }, 600);
-  });
-}
-
 function initContactForm() {
   const form = document.getElementById('contact-form');
   if (!form) return;
@@ -626,9 +442,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initMatrix();
   initHeroBgCode();
 
-  // Show login screen
-  document.getElementById('login-screen').classList.add('active');
-  initLoginScreen();
-  initLogout();
+  // Initialize portfolio directly (no login)
+  animateCode();
+  animateCounters();
+  initReveal();
+  initNavbar();
+  initProjectFilter();
+  renderSkills();
+  renderProjects();
+  initReveal();
+  startTypingLoop(document.getElementById('typed-role'), TYPED_ROLES, 70, 2000, 40);
   initContactForm();
 });

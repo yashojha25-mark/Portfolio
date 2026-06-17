@@ -1,4 +1,3 @@
-
 :root {
     --bg-primary: #0a0e1a;
     --bg-secondary: #0d1221;
@@ -498,12 +497,8 @@ body {
     min-height: 100vh;
     position: relative;
     z-index: 1;
-    display: none;
-    flex-direction: column;
-}
-
-#portfolio-screen.active {
     display: flex;
+    flex-direction: column;
 }
 
 .navbar {
@@ -1314,7 +1309,6 @@ body {
     gap: 16px;
 }
 
-.skill-bar-item {}
 
 .skill-bar-header {
     display: flex;
